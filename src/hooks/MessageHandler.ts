@@ -26,7 +26,6 @@
  * Dok: https://icssw.org/meshcom-2-0-protokoll/
 */
 
-
 //import {useStorage, PosType, MsgType, ConfType, MheardType} from './UseStorage';
 import ConfigStore from '../store/ConfStore';
 import ShouldConfStore from '../store/ShouldConfNode';
@@ -55,7 +54,6 @@ import AprsSettingsStore from '../store/AprSettingsStore';
 
 export function useMSG() {
 
-
     // If you introduce a new message flag, add it to phoncommands.cpp in the sendToPhone() function in the node firmware!
 
     // Position we store from POS JSON from Node. Needed for mheard distance etc.
@@ -65,10 +63,7 @@ export function useMSG() {
     const node_call_ref = useRef<string>("");
     const POS_DECIMALS = 4;
 
-
     const parseMsg = async (msg:DataView) => {
-
-
         // 0x00 at the end of msg indicates msg end!
         const msg_len = msg.byteLength;
         console.log("MSG Len: " + msg_len);
@@ -84,8 +79,6 @@ export function useMSG() {
         const date_now = format(now_obj, "yyyy-MM-dd");
         let time = format(now_obj, "HH:mm:ss");
         console.log("Date - Time: " + date_now + " - " + time);
-
-
 
         switch (msgflag) {
 
@@ -127,38 +120,31 @@ export function useMSG() {
 
                 let route_arr: number[] = [];
 
-
                 if(msg_type === 58 || msg_type === 33){
 
                     // from callsign extraction
                     for (let i = 0; i < msg_len; i++) {
                         //stop if > or colon sign comes and store index to call len
                         // ascci 62 = > and ascii 44 = ,
-
                         
                         if(msg.getUint8(i + call_offset) === 62){
-
                             call_len = i - 1;
                             break;
                         }
 
                         if(msg.getUint8(i + call_offset) === 44) {
-
                             route_calls = true;
                             //console.log("Msg has route info");
-
                             call_len = i - 1;
                             break;
                         }
 
                         call_arr[i] = msg.getUint8(i + call_offset);
-                        
                     }
 
                     //console.log("Call Len: " + call_len);
                     from_callsign_ = convBARRtoStr(call_arr);
                     console.log("From Call: " + from_callsign_);
-
     
                     text_offset = call_offset + text_offset_call + call_len;
                     //console.log("Text Offset: " + text_offset);
@@ -168,16 +154,12 @@ export function useMSG() {
                         //console.log("Getting all callsigns");
 
                         for (let i = 0; i < msg_len; i++) {
-
                             if(msg.getUint8(i + call_offset) === 62){
-
                                 call_len = i - 1;
                                 text_offset = call_offset + text_offset_call + call_len;
                                 //console.log("Text Offset Route: " + text_offset);
-
                                 break;
                             }
-
                             route_arr[i] = msg.getUint8(i + call_offset);
                         }
 
@@ -189,9 +171,7 @@ export function useMSG() {
                         //console.log(route_call_cnt + " Calls in route");
 
                         // assemble the via string
-                        
                         for(let j=0; j<route_call_cnt; j++){
-
                             if(j < (route_call_cnt - 1)){
                                 via_str += route_call_arr[j] + " > ";
                             } else {
@@ -220,29 +200,23 @@ export function useMSG() {
                     // check if it is broadcast or DM
 
                     if(msg.getUint8(text_offset - 2) === 42){
-
                         isDM_ = 0;
                         console.log("Broadcast Message received");
                         
                     } else {
-
                         isDM_ = 1;
                         dm_callsign_start = text_offset - 2;
                         console.log("Direct Message received");
-
                     }
 
                     if(isDM_ === 1){
-
                         let dm_arr_index = 0;
                         for (let i = dm_callsign_start; i < msg_len; i++){
-
                             if(msg.getUint8(i) === 0x3a){
                                 // set start of message text accordingly
                                 text_offset = i + 1;
                                 break;
                             }
-
                             dm_call_arr[dm_arr_index] = msg.getUint8(i);
                             dm_arr_index++;
                         }
@@ -260,14 +234,11 @@ export function useMSG() {
                             grpNum_ = +dm_callsign;
                             console.log("Group Message Nr: " + grpNum_);
                         }
-
                     }
                 }
 
-
                 // Textmessage
                 if (msg_type === 58) {
-
                     console.log("Text Msg received");
 
                     // check if it needs to notify. new connect buffer gets sent from node and we dont't want to notify for them
@@ -279,16 +250,12 @@ export function useMSG() {
                     let notify_ = 1;
 
                     if((msg.getUint8(6) & 0x20) !== 0){
-
                         notify_ = 0;
                         console.log("Message wants notify");
-
                     } 
 
                     //get text
                     let txt_arr: number[] = [];
-
-                    
                     for (let i = 0; i < msg_len; i++) {
                         //read till 0x00 byte in APRS msg
                         if (msg.getUint8(i + text_offset) === 0) break;
@@ -296,7 +263,6 @@ export function useMSG() {
                     }
 
                     let msg_text_ = convBARRtoStr(txt_arr);
-                    
                     console.log("Msg Text: " + msg_text_);
 
                     // ignore the timestamp messages
@@ -598,8 +564,6 @@ export function useMSG() {
                     const pos_text_ = convBARRtoStr(pos_arr);
                     console.log("Postext: " + pos_text_);
 
-
-
                     // lat hat nur 4 stellen vor dem . bis 90 grad = ersten zwei Stellen deg
                     // lon 5 stellen vor dem  . = ersten drei Stellen deg weil bis 180 grad beides mit leading zeros
 
@@ -723,7 +687,6 @@ export function useMSG() {
                         lat_degree_final = lat_degree_final * -1.0;
                     }
 
-
                     // round to 5 decimals
                     lat_degree_final = Math.round(lat_degree_final * 10000) / 10000;
                     lon_degree_final = Math.round(lon_degree_final * 10000) / 10000;
@@ -731,7 +694,6 @@ export function useMSG() {
                     // avoid 0.0 / 0.0 POS
                     if(lat_degree_final === 0.0 && lon_degree_final === 0.0) break;
                     
-
                     console.log("Pos Msg Latitude: " + lat_degree_final);
                     console.log("Pos Msg Longitude: " + lon_degree_final);
 
@@ -784,67 +746,55 @@ export function useMSG() {
                                     break;
                                 }
                                 case "P=": {
-
                                     pressure_ = +value_str;
                                     console.log("Pressure: " + pressure_);
                                     break;
                                 }
                                 case "H=": {
-
                                     humidity_ = +value_str;
                                     console.log("Humidity: " + humidity_);
                                     break;
                                 }
                                 case "T=": {
-
                                     temperature_ = +value_str;
                                     console.log("Temperature: " + temperature_);
                                     break;
                                 }
                                 case "Q=": {
-
                                     qnh_ = +value_str;
                                     console.log("QNH: " + qnh_);
                                     break;
                                 }
                                 case "O=": {
-
                                     temp_out_ = +value_str;
                                     console.log("Temp Out: " + temp_out_);
                                     break;
                                 }
                                 case "G=": {
-
                                     gas_res_ = +value_str;
                                     console.log("Gas Resistance: " + gas_res_);
                                     break;
                                 }
                                 case "V=": {
-
                                     data_vers_ = +value_str;
                                     console.log("Data Version: " + data_vers_);
                                     break;
                                 }
                                 case "C=": {
-
                                     co2_ = +value_str;
                                     console.log("CO2: " + co2_);
                                     break;
                                 }
                                 case "F=": {
-
                                     alt_press_ = +value_str;
                                     console.log("Alt Press: " + alt_press_);
                                     break;
                                 }
-                                
                             }
                         }
 
                         if (bat_str === "0") bat_str = "N.A.";
-
                         //console.log("Pos Msg Battery: " + bat_str);
-
                     }
                     
                     // check for valid lat lon value
@@ -869,7 +819,6 @@ export function useMSG() {
                             co2: co2_,
                             alt_press: alt_press_
                         }
-
                         return (newPosDB);
 
                     } else {
@@ -893,18 +842,13 @@ export function useMSG() {
             }
 
             case 0x80: {
-
                 //console.log("OLD Config Msg received");
-
                 /*
                 LENGTH 2B - FLAG 1B - LENCALL 1B - Callsign - LAT 8B(Double) - LON 8B(Double) - ALT 4B(INT) - 1B SSID_Length - Wifi_SSID - 1B Wifi_PWD - Wifi_PWD 
                 - 1B APRS_PRIM_SEC - 1B APRS_SYMBOL - 4B SettingsMask - 1B HW-ID - 1B MOD-ID - 1B FW_Version - 1B Comment Length - Comment - 4B Settingsbyte2 - 0x00
                 */
-
                 break;
             }
-
-            
 
             // Data Message from Node
             /**
@@ -919,7 +863,6 @@ export function useMSG() {
              * DI{"TYP":"I","FWVER":"C 4.29 d","CALL":"OE1KFR-2","ID":3215539008,"HWID":10,"MAXV":4.239999771,"ATXT":"","BLE":"short","BATP":0,"BATV":1.86}
              * 
              */
-
 
             case 0x44:  {
                 // if a message starts with P or W we got gps info or wx info from node
@@ -949,13 +892,11 @@ export function useMSG() {
                 // remove the Data Identifier Byte
                 json_str = msg_text_.slice(1, msg_text_.length);
 
-
                 //console.log("JSON String: " + json_str);
 
                 switch (msg_type){
 
                     case "{": {
-
                         if (!json_str.endsWith("}")) return;
 
                         console.log("Json Data received!");
@@ -976,7 +917,6 @@ export function useMSG() {
                         switch (json_type) {
 
                             case "G": {
-
                                 LogS.log(0, "GPS Data received!");
                                 const gps_data: GpsData = JSON.parse(json_str);
 
@@ -1069,7 +1009,6 @@ export function useMSG() {
                             }
 
                             case "W": {
-
                                 LogS.log(0, "WX Data received!");
                                 const wx_data: WxData = JSON.parse(json_str);
 
@@ -1105,12 +1044,10 @@ export function useMSG() {
                                     console.log("MHANDLER: Update Position in DB");
                                     await DatabaseService.writePos(db_pos);
                                 }
-
                                 break;
                             }
 
                             case "I": {
-
                                 LogS.log(0, "NodeInfo Data received!");
                                 const info_data: InfoData = JSON.parse(json_str);
 
@@ -1180,9 +1117,7 @@ export function useMSG() {
                                 /*AprsCmtStore.update(s => {
                                     s.aprsCmt = aprs_cmt;
                                 });*/
-
                                 break;
-
                             }
 
                             case "SE": {
@@ -1213,8 +1148,6 @@ export function useMSG() {
                                 SensorSettingsStore.update(s => {
                                     s.sensorSettings = sensor_settings;
                                 });
-
-
                                 break;
                             }
 
@@ -1239,7 +1172,6 @@ export function useMSG() {
                                 ConfigStore.update(s => {
                                     s.config.wifi_ssid = wifi_settings.SSID;
                                 });
-
                                 break;
                             }
 
@@ -1281,7 +1213,6 @@ export function useMSG() {
                                 NodeSettingsStore.update(s => {
                                     s.nodeSettings = node_settings;
                                 });
-
                                 break;
                             }
 
@@ -1335,7 +1266,6 @@ export function useMSG() {
                                 AprsSettingsStore.update(s => {
                                     s.aprsSettings = aprs_settings;
                                 });
-
                                 break;
                             }
 
@@ -1409,7 +1339,6 @@ export function useMSG() {
                                     mh_pl:mheard.PL,
                                     mh_mesh:mheard.MESH
                                 }
-
                                 return (new_mheard);
                             }
 
@@ -1419,7 +1348,6 @@ export function useMSG() {
                                 BleConfigFinish.update(s => {
                                     s.BleConfFin = Date.now();
                                 });
-                                
                                 break;
                             }
                         }
@@ -1433,8 +1361,6 @@ export function useMSG() {
         }
     }
 
-    
-
     //process altitude and bat strings 
     const convertAlt = (alt_str: string):number => {
         //console.log("Altitude String: " + alt_str);
@@ -1444,7 +1370,6 @@ export function useMSG() {
         return alt_nr_meter;
     }
 
-
     // convert string to ascii (number) array for sending to node
     const convSTRtoARR = (str:string): number[] => {
         let ascii_arr: number[] = [];
@@ -1453,7 +1378,6 @@ export function useMSG() {
         }
         return ascii_arr;
     }
-
 
     // convert byte array to string
     const convBARRtoStr = (arr: number[]): string => {
@@ -1465,7 +1389,6 @@ export function useMSG() {
         for(let i=0; i<arr_len; i++){
             textbuff[i] = arr[i];
         }
-
         const str_dec = new TextDecoder();
         const dec_txt_msg = str_dec.decode(textbuff);
         return dec_txt_msg;
@@ -1511,7 +1434,6 @@ export function useMSG() {
         distance = distance * 180 / Math.PI;
         distance = distance * 60 * 1.1515;
         distance = distance * 1.609344;
-
         distance = Math.round(distance * 100) / 100;
 
         return distance;
